@@ -14,7 +14,10 @@ Colnames: Sequence, Best Hit (BH), BH Superfamily, BH Order, Family, Superfamily
 
 In the SLiM folder:
 
-- The SLiM script used to study watterson theta evolution
+- Run.SLiM: the SLiM script used to study watterson theta evolution.
 
-In the
+In the TE_db folder:
+
+- LTR_Corresponder.py: the script used to establish a correspondancy table LTR - Internal part
+- LTR_Merger.py: the script used to merge LTR and Internal Part using a correspondancy table
 

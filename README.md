@@ -24,8 +24,8 @@ In the TE_db folder:
 In the PoPoolationTE2 folder:
 
 - ItMap.sh: the script used to perfom an iterative masking of the genome assembly;
-- CrossMapping.sh:
-- annoPF.py:
+- CrossMapping.sh: the script used to generate info. about crossmapping TEs;
+- annoPF.py: the script used to create a TE hierarchy (PoPoolationTE2 input file) using info. about CrossMapping TEs to create pseudofamilies.
 
 In the circos folder:
 

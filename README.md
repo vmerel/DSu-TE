@@ -29,7 +29,7 @@ In the PoPoolationTE2 folder:
 
 In the circos folder:
 
--
--
+- Circos.Rmd: the pipeline used to produce fig 1.C
+- *.py: necessary python scripts
 
 

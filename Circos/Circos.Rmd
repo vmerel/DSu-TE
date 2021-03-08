@@ -1,0 +1,447 @@
+---
+title: "Circos"
+author: "V. Mérel"
+date: "30 mars 2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(cowplot)
+library(dplyr)
+library(ggplot2)
+```
+
+# promer
+
+```{bash, eval=FALSE}
+cd /home/lerat/REDSKIN/Circos/suz
+
+~/Software/MUMmer3.23/promer --prefix=mel_suz \
+/home/lerat/REDSKIN/Circos/suz/dm6.fa.masked \
+/home/lerat/REDSKIN/TE_db/HRM_2/Drosophila_suzukii.fasta.masked
+```
+
+# Filtering alignments
+
+## Quality filtering
+
+```{bash, eval=FALSE}
+cd /home/lerat/REDSKIN/Circos/suz
+
+~/Software/MUMmer3.23/delta-filter \
+-q \
+-r \
+mel_suz.delta > mel_suz.filter
+#Finally, for mapping query contigs, or sequencing reads, to a reference genome, use -q 
+# -q Maps each position of each query to its best hit in the reference, allowing for reference overlaps
+# -r Maps each position of each reference to its best hit in the query, allowing for query overlaps
+
+cd /home/lerat/REDSKIN/Circos/suz
+~/Software/MUMmer3.23/show-coords mel_suz.filter \
+-b \
+-T \
+-H \
+-L 100 \
+-r> mel_suz.coords
+
+#Putting thing as coordinates and:
+#-b Merges overlapping alignments regardless of match dir or frame and does not display any identity information
+#-L Set minimum alignment length to display
+#-T Switch output to tab-delimited format
+#-H Do not print the output header
+#-r Sort output lines by reference IDs and coordinates
+
+```
+
+## Contigs filtering
+
+### Choosing Contig
+
+Selecting only "2L 2R 3L 3R X and 4" for dmel
+
+```{bash, eval=FALSE}
+#chr2L to 2L
+sed -i 's/chr//g' /home/lerat/REDSKIN/Circos/suz/dm6.fa.masked
+
+python /home/lerat/tedss/Circos/Choosing_Contigs.py \
+--Q_Species /home/lerat/REDSKIN/TE_db/HRM_2/Drosophila_suzukii.fasta.masked \
+--S_Species /home/lerat/REDSKIN/Circos/suz/dm6.fa.masked \
+--Q_Contigs "546" \
+--S_Contigs "2L 2R 3L 3R X 4" \
+--output /home/lerat/REDSKIN/Circos/suz/Chosen_Contigs_suz.txt
+
+```
+
+### Filtering 
+
+```{bash, eval=FALSE}
+#chr2L to 2L
+sed -i 's/chr//g' /home/lerat/REDSKIN/Circos/suz/mel_suz.coords
+
+python /home/lerat/tedss/Circos/Filtering_Contigs.py \
+--coords /home/lerat/REDSKIN/Circos/suz/mel_suz.coords \
+--Chosen_Contigs /home/lerat/REDSKIN/Circos/suz/Chosen_Contigs_suz.txt \
+--output /home/lerat/REDSKIN/Circos/suz/mel_suz.coords.filtered
+```
+
+## Merging alignments 
+
+```{bash, eval=FALSE}
+python /home/lerat/tedss/Circos/Merging_Coords.py  \
+--coords /home/lerat/REDSKIN/Circos/suz/mel_suz.coords.filtered \
+--interval 20000 \
+--output /home/lerat/REDSKIN/Circos/suz/mel_suz.coords.filtered.merged
+```
+
+## One Ref contig per Query contig
+
+```{bash, eval=FALSE}
+python /home/lerat/tedss/Circos/One_Ref_Per_Query.py  \
+--input /home/lerat/REDSKIN/Circos/suz/mel_suz.coords.filtered.merged \
+--output /home/lerat/REDSKIN/Circos/suz/mel_suz.coords.filtered.merged.1
+```
+
+# Circosing
+
+## Main file
+
+```{bash, eval=FALSE}
+#chr2L to 2L
+sed -i 's/chr//g' /home/lerat/REDSKIN/Circos/suz/Contigs_size.csv
+
+
+python /home/lerat/tedss/Circos/Circosing.py  \
+--input /home/lerat/REDSKIN/Circos/suz/mel_suz.coords.filtered.merged.1  \
+--output /home/lerat/REDSKIN/Circos/suz/one_ref_per_query.sorted.txt \
+--Contig_size /home/lerat/REDSKIN/Circos/suz/Contigs_size.csv \
+--spacing /home/lerat/REDSKIN/Circos/suz/spacing.conf \
+--reversing /home/lerat/REDSKIN/Circos/suz/reversing.conf \
+--karyotype /home/lerat/REDSKIN/Circos/suz/karyotype \
+--colors "215,215,215;215,215,215;215,215,215;215,215,215;215,215,215;215,215,215" \
+--links /home/lerat/REDSKIN/Circos/suz/links \
+--radius /home/lerat/REDSKIN/Circos/suz/radius.conf
+
+
+```
+
+## Recoloring link
+
+```{bash, eval=FALSE}
+
+python /home/lerat/tedss/Circos/DensityTrackFromGFF_3.py  \
+--fasta /home/lerat/REDSKIN/TE_db/HRM_2/Drosophila_suzukii.fasta.masked \
+--gff /home/lerat/REDSKIN/TE_db/HRM_2/Drosophila_suzukii.fasta.out.gff \
+--window 200000 \
+--feature similarity \
+--karyotype /home/lerat/REDSKIN/Circos/suz/karyotype \
+--output /home/lerat/REDSKIN/Circos/suz/TEs.txt \
+--prefix dq 
+
+#dr_X 0 30517 3
+grep -v 'dr_' /home/lerat/REDSKIN/Circos/suz/TEs.txt > /home/lerat/REDSKIN/Circos/suz/TEs_suz.txt
+
+
+sed 's/chr//' /home/lerat/REDSKIN/Circos/suz/mel/Masking/dm6.fa.out.gff >  /home/lerat/REDSKIN/Circos/suz/mel/Masking/dm6.fa.out.gff.edited
+
+python /home/lerat/tedss/Circos/DensityTrackFromGFF_3.py  \
+--fasta /home/lerat/REDSKIN/Circos/suz/dm6.fa.masked \
+--gff /home/lerat/REDSKIN/Circos/suz/mel/Masking/dm6.fa.out.gff.edited \
+--window 200000 \
+--feature similarity \
+--karyotype /home/lerat/REDSKIN/Circos/suz/karyotype_dmel \
+--output /home/lerat/REDSKIN/Circos/suz/TEs_mel.txt \
+--prefix dr 
+
+cat /home/lerat/REDSKIN/Circos/suz/TEs_suz.txt /home/lerat/REDSKIN/Circos/suz/TEs_mel.txt >  /home/lerat/REDSKIN/Circos/suz/TEs_All.txt
+
+python /home/lerat/tedss/Circos/DensityTrackFromGFF_3.py  \
+--fasta /home/lerat/REDSKIN/TE_db/HRM_2/Drosophila_suzukii.fasta.masked \
+--gff /home/lerat/REDSKIN/Gene_Content/suz.gff3.edited \
+--window 200000 \
+--feature gene \
+--karyotype /home/lerat/TEDSS/Circos/suz/karyotype \
+--output /home/lerat/REDSKIN/Circos/suz/Genes.txt \
+--prefix dq 
+
+#dr_X 0 30517 3
+grep -v 'dr_' /home/lerat/REDSKIN/Circos/suz/Genes.txt > /home/lerat/REDSKIN/Circos/suz/Genes_suz.txt
+
+grep 'dr_' /home/lerat/REDSKIN/Circos/suz/karyotype > /home/lerat/REDSKIN/Circos/suz/karyotype_dmel
+
+python /home/lerat/tedss/Circos/Coloring_Links.py  \
+--input /home/lerat/REDSKIN/Circos/suz/links  \
+--output /home/lerat/REDSKIN/Circos/suz/recolored_links \
+--genes /home/lerat/REDSKIN/Circos/suz/Genes.txt \
+--colors "215,215,215;215,215,215;215,215,215;215,215,215;215,215,215;215,215,215" \
+--alternate_colors "230,230,230;230,230,230;230,230,230;230,230,230;230,230,230;230,230,230" 
+
+#--colors "85,187,238;85,187,238;187,221,85;187,221,85;153,187,204;255,204,102" \
+#--alternate_colors "180,231,255;180,231,255;224,248,152;224,248,152;209,230,241;255,228,173" 
+```
+
+## Recoloring suz contigs
+
+```{bash, eval=FALSE}
+sed -i 's/230,230,230/153,187,204/g' /home/lerat/REDSKIN/Circos/suz/karyotype
+```
+
+## Conf
+
+Generating the conf. file
+
+```{bash, eval=FALSE}
+#####<image>###### Where to specify the angle
+echo '# circos.conf
+
+<image>
+<<include etc/image.conf>>
+# Included from Circos distribution.
+ # override angle_offset defined in etc/image.conf 
+ angle_offset* = 250
+</image>
+' > \
+/home/lerat/REDSKIN/Circos/suz/circos.conf
+#####</image>#####
+
+#####No section###### Where to specify karyotype path
+##################### Where to specify chromosomes radius
+##################### Where to specify chromosomes to reverse
+
+echo 'karyotype = /home/lerat/REDSKIN/Circos/suz/karyotype
+
+chromosomes_units           = 1000000
+
+' >> \
+/home/lerat/REDSKIN/Circos/suz/circos.conf
+cat /home/lerat/REDSKIN/Circos/suz/radius.conf >> \
+/home/lerat/REDSKIN/Circos/suz/circos.conf
+echo '
+' >> \
+/home/lerat/REDSKIN/Circos/suz/circos.conf
+cat /home/lerat/REDSKIN/Circos/suz/reversing.conf >> \
+/home/lerat/REDSKIN/Circos/suz/circos.conf
+#####/No section######
+
+#####<ideogram>###### 
+echo '
+
+#if you want to select chromosomes
+chromosomes_display_default = yes
+
+<ideogram>
+
+
+' >> \
+/home/lerat/REDSKIN/Circos/suz/circos.conf
+cat /home/lerat/REDSKIN/Circos/suz/spacing.conf >> \
+/home/lerat/REDSKIN/Circos/suz/circos.conf
+echo '
+# Ideogram position, fill and outline
+
+radius           = 0.60r
+
+thickness        = 20p
+fill             = yes
+stroke_color     = black
+stroke_thickness = 2p
+
+# Minimum definition for ideogram labels.
+
+show_label       = yes
+# see etc/fonts.conf for list of font names
+label_font       = default 
+label_radius     = 1r + 275p
+label_size       = 30
+label_parallel   = yes
+
+#Removing labels for suzukii
+label_format     = eval( var(chr) =~ /dr_/ ? var(label) : "")
+
+</ideogram>
+' >> \
+/home/lerat/REDSKIN/Circos/suz/circos.conf
+#####</ideogram>###### 
+
+#####<ticks>###### 
+echo '
+show_ticks          = yes
+show_tick_labels    = yes
+
+<ticks>
+# ticks will not be displayed on every ideogram by default
+chromosomes_display_default = no
+# ticks only on these ideograms and/or regions
+chromosomes = dr_X;dr_4;dr_3R;dr_3L;dr_2R;dr_2L
+
+
+radius           = 1r
+color            = black
+thickness        = 2p
+
+# the tick label is derived by multiplying the tick position
+# by multiplier and casting it in format:
+#
+# sprintf(format,position*multiplier)
+
+multiplier       = 1e-6
+
+# %d   - integer
+# %f   - float
+# %.1f - float with one decimal
+# %.2f - float with two decimals
+#
+# for other formats, see http://perldoc.perl.org/functions/sprintf.html
+
+format           = %d
+
+
+<tick>
+spacing        = 1u
+size           = 15p
+show_label     = no
+label_size     = 20p
+label_offset   = 10p
+format         = %d
+</tick>
+
+</ticks>' >> \
+/home/lerat/REDSKIN/Circos/suz/circos.conf
+#####</ticks>###### 
+
+
+#####<links>###### 
+echo '
+<links>
+
+<link>
+file          = /home/lerat/REDSKIN/Circos/suz/recolored_links
+radius        = 0.95r
+bezier_radius = 0r
+color         = black_a4
+
+<rules>
+<rule>
+condition = 1
+thickness = eval(max(5,round(var(size1)/50000)))
+</rule>
+</rules>
+
+</link>
+
+</links>
+' >> \
+/home/lerat/REDSKIN/Circos/suz/circos.conf
+#####</links>###### 
+
+#####<plot>######
+
+echo '
+<plots>
+
+<plot>
+type = histogram
+file = /home/lerat/REDSKIN/Circos/suz/Genes_suz.txt
+r1               = 1.16r
+r0               = 1.06r
+orientation      = out
+fill_color = 255,223,68
+stroke_thickness = 0p
+
+<background>
+color = 255,223,68
+</background>
+
+</plot>
+' >> \
+/home/lerat/REDSKIN/Circos/suz/circos.conf
+
+echo '
+<plot>
+type = histogram
+file = /home/lerat/REDSKIN/Circos/suz/Genes_mel.txt
+r1               = 1.16r
+r0               = 1.06r
+orientation      = out
+fill_color = 255,236,150
+stroke_thickness = 0p
+
+<background>
+color = 255,236,150
+</background>
+
+</plot>
+' >> \
+/home/lerat/REDSKIN/Circos/suz/circos.conf
+
+echo '
+<plot>
+type = histogram
+file = /home/lerat/REDSKIN/Circos/suz/TEs_suz.txt
+r1               = 1.30r
+r0               = 1.20r
+orientation      = out
+fill_color = 200,132,178
+stroke_thickness = 0p
+
+<background>
+color = 200,132,178
+</background>
+
+</plot>' >> \
+/home/lerat/REDSKIN/Circos/suz/circos.conf
+
+echo '
+<plot>
+type = histogram
+file = /home/lerat/REDSKIN/Circos/suz/TEs_mel.txt
+r1               = 1.30r
+r0               = 1.20r
+orientation      = out
+fill_color = 228,202,221
+stroke_thickness = 0p
+
+<background>
+color = 228,202,221
+</background>
+
+</plot>
+
+
+</plots>
+' >> \
+/home/lerat/REDSKIN/Circos/suz/circos.conf
+#####</plot>###### 
+
+#####footnotes######
+echo '################################################################
+# The remaining content is standard and required. It is imported 
+# from default files in the Circos distribution.
+#
+# These should be present in every Circos configuration file and
+# overridden as required. To see the content of these files, 
+# look in etc/ in the Circos distribution.
+
+
+
+# RGB/HSV color definitions, color lists, location of fonts, fill patterns.
+# Included from Circos distribution.
+<<include etc/colors_fonts_patterns.conf>>
+
+# Debugging, I/O an dother system parameters
+# Included from Circos distribution.
+<<include etc/housekeeping.conf>>' >> \
+/home/lerat/REDSKIN/Circos/suz/circos.conf
+#################### 
+
+#cat /home/lerat/REDSKIN/Circos/suz/circos.conf
+
+
+```
+
+## Run
+
+```{bash, eval=FALSE}
+cd /home/lerat/REDSKIN/Circos/suz/
+perl ~/Software/circos-0.69-9/bin/circos -conf /home/lerat/REDSKIN/Circos/suz/circos.conf
+```

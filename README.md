@@ -23,7 +23,7 @@ In the TE_db folder:
 
 In the PoPoolationTE2 folder:
 
-- IterativeMasking.sh:
+- ItMap.sh: the script used to perfom an iterative masking of the genome assembly;
 - CrossMapping.sh:
 - annoPF.py:
 

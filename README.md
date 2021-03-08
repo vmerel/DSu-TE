@@ -14,5 +14,7 @@ Colnames: Sequence, Best Hit (BH), BH Superfamily, BH Order, Family, Superfamily
 
 In the SLiM folder:
 
+- The SLiM script used to study watterson theta evolution
+
 In the
 

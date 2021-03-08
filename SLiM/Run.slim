@@ -1,0 +1,98 @@
+// set up a simple neutral simulation
+initialize()
+{
+// set the overall mutation rate
+// Keihgtley, Genetics 2014
+initializeMutationRate(2.8e-9/D);
+
+// m1 mutation type: neutral
+initializeMutationType("m1", 0.5, "f", 0.0);
+
+// g1 genomic element type: uses m1 for all mutations
+initializeGenomicElementType("g1", m1, 1.0);
+
+// uniform chromosome of length 1 kb
+initializeGenomicElement(g1, 0, 999);
+
+// uniform recombination along the chromosome
+// Comeron (https://petrov.stanford.edu/cgi-bin/recombination-rates_updateR5.pl)
+initializeRecombinationRate(2.32e-8/D);
+
+// Calculate Total
+defineConstant("Total", asInteger((1.7e6*D*7.5)+50));
+
+// Calculate BurnIn
+defineConstant("BurnIn", asInteger(1.7e6*D*7.5));
+
+// Calculate N
+defineConstant("N", asInteger(1.7e6*D));
+}
+
+
+// write output header
+// create a population of N individuals
+// define the end of simulations
+
+1 { 
+writeFile(paste("/beegfs/data/merel/REDSKIN/Reviewers/SLiM/Runs/",r,"/",D,"_",b,"_",q,".csv",sep=""), "D Generation PopSize Bottleneck Growth theta", append = F);
+sim.addSubpop("p1", N);
+sim.rescheduleScriptBlock(s1, start=2, end=Total);
+}
+
+s1 2:170000000 {
+
+  
+  //bottleneck
+  if (sim.generation == BurnIn)
+
+    {
+
+    p1.setSubpopulationSize(asInteger(N*b));
+
+    }
+    
+  //expansion
+  
+  if (sim.generation >= BurnIn) 
+    
+    {
+    
+    if (p1.individualCount < N) 
+        
+        {
+        
+        newSize = asInteger(round(q^(sim.generation - (BurnIn-1)) * asInteger(N*b)));
+        
+        if (newSize > N)
+        
+          {
+          newSize = N;
+          }
+
+        p1.setSubpopulationSize(newSize);
+
+        }
+    }
+ 
+
+  //theta & pop. size
+  
+  if ((sim.generation > asInteger(BurnIn-100)) | (sim.generation % 1000 == 0)) 
+  
+    {
+    
+    SubPop = sim.subpopulations[sim.subpopulations.id == 1];
+      
+    PopSize = SubPop.individuals.size();
+      
+    theta = calcWattersonsTheta(SubPop.genomes);
+      
+    Line = paste(D + " " + sim.generation + " " + PopSize + " " + b + " " + q + " " + theta);
+      
+    if (!writeFile(paste("/beegfs/data/merel/REDSKIN/Reviewers/SLiM/Runs/",r,"/",D,"_",b,"_",q,".csv",sep=""), Line, append = T))
+      stop("Error writing file.");
+        
+    }
+}
+
+

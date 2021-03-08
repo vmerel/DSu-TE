@@ -21,3 +21,15 @@ In the TE_db folder:
 - LTR_Corresponder.py: the script used to establish a correspondancy table LTR - Internal part
 - LTR_Merger.py: the script used to merge LTR and Internal Part using a correspondancy table
 
+In the PoPoolationTE2 folder:
+
+- IterativeMasking.sh:
+- CrossMapping.sh:
+- annoPF.py:
+
+In the circos folder:
+
+-
+-
+
+
